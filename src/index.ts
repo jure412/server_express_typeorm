@@ -1,11 +1,14 @@
-import { decode } from "jsonwebtoken";
-// import  cors  from "cors";
+import { verify } from "jsonwebtoken";
 import { DataSource } from "typeorm";
-import { CREATE_ANIMAL, GET_ANIMALS } from "./Controllers/AnimalController";
-import { LOGIN } from "./Controllers/AuthController";
+import {
+  CREATE_POST,
+  DELETE_POST,
+  GET_POSTS,
+} from "./Controllers/PostController";
+import { LOGIN, LOGOUT, REFRESH_TOKEN } from "./Controllers/AuthController";
 import { CREATE_USER, GET_USER, GET_USERS } from "./Controllers/UserController";
-import { User } from "./Entities/User";
-import { ErrorHandler } from "./Helpers/ErrorHandler";
+import { handlePromise } from "./Helpers/HandlePromise";
+const cookies = require("cookie-parser");
 const cors = require("cors");
 const express = require("express");
 const app = express();
@@ -28,31 +31,58 @@ const main = async () => {
   try {
     await AppDataSource.initialize();
 
-    app.use(express.json());
-    app.use(cors());
-    app.use(express.urlencoded({ extended: true }));
+    const credentials = (req, res, next) => {
+      const origin = req.headers.origin;
+      if (["http://localhost:8080", "http://localhost:3000"].includes(origin)) {
+        res.header("Access-Control-Allow-Credentials", true);
+      }
+      next();
+    };
 
-    const Middleware = function (req: any, _: any, next: () => void) {
-      const token: any = req.headers.authorization?.split(" ")[1];
-      if (token) {
-        const data: any = decode(token);
-        if (data) {
-          req.userId = data.userId;
-          next();
+    const corsOptions = {
+      origin: (origin, callback) => {
+        if (
+          ["http://localhost:8080", "http://localhost:3000"].indexOf(origin) !==
+            -1 ||
+          !origin
+        ) {
+          callback(null, true);
         } else {
-          throw new Error("INVALID_TOKEN");
+          callback(new Error("Not allowed by CORS"));
         }
+      },
+      optionsSuccessStatus: 200,
+    };
+
+    app.use(credentials);
+    app.use(cors(corsOptions));
+    app.use(express.urlencoded({ extended: true }));
+    app.use(express.json());
+    app.use(cookies());
+
+    const Middleware = function (req: any, res: any, next: () => void) {
+      const token: any = req.headers.authorization?.split(" ")[1];
+      console.log({ token });
+      if (token) {
+        verify(token, tokenVariable, (err, decoded) => {
+          if (err) res.status(403).send("INVALID_TOKEN"); //invalid token
+          req.userId = decoded.userId;
+          next();
+        });
       } else {
-        throw new Error("TOKEN_MISSING");
+        res.status(402).send("INVALID_ACCESS");
       }
     };
 
-    app.post("/api/login", ErrorHandler(LOGIN));
-    app.post("/api/user/:id?", Middleware, ErrorHandler(GET_USER));
-    app.get("/api/users", Middleware, ErrorHandler(GET_USERS));
-    app.post("/api/user/create", Middleware, ErrorHandler(CREATE_USER));
-    app.get("/api/animals", Middleware, ErrorHandler(GET_ANIMALS));
-    app.post("/api/animal/create", Middleware, ErrorHandler(CREATE_ANIMAL));
+    app.post("/api/login", handlePromise(LOGIN));
+    app.post("/api/user/create", handlePromise(CREATE_USER));
+    app.get("/api/refresh", handlePromise(REFRESH_TOKEN));
+    app.post("/api/logout", handlePromise(LOGOUT));
+    app.get("/api/user/:id?", Middleware, handlePromise(GET_USER));
+    app.get("/api/users", Middleware, handlePromise(GET_USERS));
+    app.post("/api/post/create", Middleware, handlePromise(CREATE_POST));
+    app.post("/api/post/delete", Middleware, handlePromise(DELETE_POST));
+    app.get("/api/posts", Middleware, handlePromise(GET_POSTS));
 
     app.listen(8080, () => {
       console.log("Now running on port 8080");

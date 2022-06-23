@@ -1,12 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  BaseEntity,
-  Unique,
-  OneToMany,
-} from "typeorm";
-import { Animal } from "./Animal";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Post } from "./Post";
 
 @Entity()
 export class User {
@@ -25,6 +18,9 @@ export class User {
   @Column()
   password!: string;
 
-  @OneToMany(() => Animal, (animal) => animal.user)
-  animals: Animal[];
+  @OneToMany(() => Post, (post) => post.user, { cascade: ["insert", "update"] })
+  posts: Post[];
+
+  @Column({ default: null })
+  refreshToken: string | null;
 }
