@@ -7,7 +7,6 @@ import { compareSync } from "bcryptjs";
 // "/api/login"
 export const LOGIN = async (
   req: {
-    id: any;
     body: {
       email: string;
       password: string;
@@ -25,20 +24,19 @@ export const LOGIN = async (
         maxAge: number;
       }
     );
-    sendStatus(arg0: number);
-    json: (arg: { token: String }) => any;
+    json: (arg: { token: String }) => {};
   }
 ) => {
   const { email, password } = req.body;
   const userRepo = AppDataSource.getRepository(User);
   const user = await userRepo.findOneBy({ email });
   if (!user) {
-    return res.status(402).send("EMAIL_NOT_VALID");
+    return res.status(401).send("EMAIL_NOT_VALID");
   } else {
     // const valid = password === user.password;
     const match = compareSync(password, user.password);
     if (!match) {
-      return res.status(402).send("PASSWORD_NOT_VALID");
+      return res.status(401).send("PASSWORD_NOT_VALID");
     } else {
       const accessToken: string = sign({ userId: user.id }, tokenVariable, {
         expiresIn: "10s",
@@ -61,7 +59,7 @@ export const LOGIN = async (
 };
 
 export const REFRESH_TOKEN = async (
-  req: any,
+  req,
   res: {
     status: any;
     cookie(
@@ -74,12 +72,11 @@ export const REFRESH_TOKEN = async (
         maxAge: number;
       }
     );
-    sendStatus(arg0: number);
-    json: (arg: { token: String }) => any;
+    json: (arg: { token: String }) => {};
   }
 ) => {
   const cookies = req.cookies;
-  if (!cookies?.jwt) return res.status(402).send("REFRESH_TOKEN_MISSING");
+  if (!cookies?.jwt) return res.status(401).send("REFRESH_TOKEN_MISSING");
   const refreshToken = cookies.jwt;
 
   const userRepo = AppDataSource.getRepository(User);
@@ -87,7 +84,7 @@ export const REFRESH_TOKEN = async (
     refreshToken,
   });
 
-  if (!foundUser) return res.status(402).send("REFRESH_TOKEN_NOT_FOUND");
+  if (!foundUser) return res.status(401).send("REFRESH_TOKEN_NOT_FOUND");
   verify(refreshToken, tokenVariable, (err, decoded) => {
     if (err || foundUser.id !== decoded.userId)
       return res.status(402).send("REFRESH_TOKEN_NOT_VALID");
@@ -100,8 +97,9 @@ export const REFRESH_TOKEN = async (
 
 export const LOGOUT = async (
   req: {
-    cookies: any;
-    id: any;
+    cookies: {
+      jwt: string;
+    };
     body: {
       email: string;
       password: string;
@@ -112,22 +110,11 @@ export const LOGOUT = async (
       arg0: string,
       arg1: { httpOnly: boolean; sameSite: string; secure: boolean }
     );
-    cookie(
-      arg0: string,
-      refreshToken: string,
-      arg2: {
-        httpOnly: boolean;
-        secure: boolean;
-        sameSite: string;
-        maxAge: number;
-      }
-    );
     sendStatus(arg0: number);
-    json: (arg: { token: String; user: any }) => any;
   }
 ) => {
   const cookies = req.cookies;
-  if (!cookies?.jwt) return res.sendStatus(204); //No content
+  if (!cookies?.jwt) return res.sendStatus(204);
   const refreshToken = cookies.jwt;
 
   const userRepo = AppDataSource.getRepository(User);

@@ -65,12 +65,12 @@ const main = async () => {
       console.log({ token });
       if (token) {
         verify(token, tokenVariable, (err, decoded) => {
-          if (err) res.status(403).send("INVALID_TOKEN"); //invalid token
+          if (err) res.status(401).send("UNAUTHORIZED"); //invalid token
           req.userId = decoded.userId;
           next();
         });
       } else {
-        res.status(402).send("INVALID_ACCESS");
+        res.status(401).send("UNAUTHORIZED");
       }
     };
 

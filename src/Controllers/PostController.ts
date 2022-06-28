@@ -9,7 +9,7 @@ export const GET_POSTS = async (
     query: any;
   },
   res: {
-    json: (arg: [any[] | [], number]) => any;
+    json: (arg: [Post[], number]) => any;
   }
 ) => {
   const postsRepository = AppDataSource.getRepository(Post);
@@ -37,22 +37,23 @@ export const GET_POSTS = async (
 // "/api/animals/create",
 export const CREATE_POST = async (
   req: {
-    userId: any;
-    body: any;
+    userId: number;
+    body: {
+      text: string;
+    };
   },
   res: {
-    status: any;
-    json: (arg: any) => any;
+    status: (number: number) => any;
+    json: (args) => Post;
   }
 ) => {
-  console.log({ req: req.userId });
   const newPost = req.body;
   const user = await AppDataSource.manager.findOneBy(User, {
     id: Number(req.userId),
   });
 
   if (!user) {
-    return res.status(402).send("UNAUTHENTICATED_USER");
+    return res.status(401).send("UNAUTHORIZED");
   }
 
   const post = new Post();
@@ -64,16 +65,15 @@ export const CREATE_POST = async (
 
 export const DELETE_POST = async (
   req: {
-    userId: any;
-    body: any;
+    body: {
+      id: number;
+    };
   },
   res: {
     sendStatus(arg0: number);
-    status: any;
-    json: (arg: any) => any;
   }
 ) => {
   await AppDataSource.manager.delete(Post, req.body.id);
 
-  return res.sendStatus(204);
+  return res.sendStatus(200);
 };

@@ -5,22 +5,15 @@ import { hash } from "bcryptjs";
 // get userS
 // "/api/users"
 export const GET_USERS = async (
-  req: {
-    userId: any;
-    body: {
-      offset: number;
-      limit: number;
-    };
-  },
+  req,
   res: {
-    status: any;
     json: (arg: [any[], number]) => any;
   }
 ) => {
-  const { userId } = req;
-  if (!userId) {
-    return res.status(402).send("INVALID_ACCESS");
-  }
+  // const { userId } = req;
+  // if (!userId) {
+  //   return res.status(402).send("INVALID_ACCESS");
+  // }
 
   const users = await AppDataSource.manager.findAndCount(User);
 
