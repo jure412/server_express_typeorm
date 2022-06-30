@@ -29,7 +29,13 @@ export const LOGIN = async (
 ) => {
   const { email, password } = req.body;
   const userRepo = AppDataSource.getRepository(User);
-  const user = await userRepo.findOneBy({ email });
+
+  const user: any = await userRepo
+    .createQueryBuilder("user")
+    .where("user.email = :email", { email: email })
+    .addSelect("user.password")
+    .getOne();
+
   if (!user) {
     return res.status(401).send("EMAIL_NOT_VALID");
   } else {
@@ -80,6 +86,7 @@ export const REFRESH_TOKEN = async (
   const refreshToken = cookies.jwt;
 
   const userRepo = AppDataSource.getRepository(User);
+
   const foundUser = await userRepo.findOneBy({
     refreshToken,
   });

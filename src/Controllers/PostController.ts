@@ -6,31 +6,54 @@ import { AppDataSource } from "../index";
 // "/api/animals",
 export const GET_POSTS = async (
   req: {
+    userId: number;
     query: any;
   },
   res: {
-    json: (arg: [Post[], number]) => any;
+    status: any;
+    json: (arg: any) => any;
   }
 ) => {
-  const postsRepository = AppDataSource.getRepository(Post);
-  const posts = await postsRepository.findAndCount({
-    select: {
-      created_at: true,
-      id: true,
-      text: true,
-      user: { id: true, firstName: true, lastName: true, email: true },
-    },
-    relations: {
-      user: true,
-    },
-    skip: req.query.skip,
-    take: req.query.take,
-    order: {
-      created_at: "DESC",
-    },
+  const { skip, take } = req.query;
+  let user;
+
+  if (req.query.userId !== "undefined") {
+    user = await AppDataSource.manager.findOneBy(User, {
+      id: Number(req.query.userId),
+    });
+  }
+
+  if (user === "undefined" && req.query.userId) {
+    return res.status(401).send("USER_NOT_FOUND");
+  }
+
+  let posts: any = AppDataSource.getRepository(Post)
+    .createQueryBuilder("posts")
+    .skip(skip)
+    .take(take)
+    .orderBy("posts.created_at", "DESC")
+    .leftJoinAndSelect("posts.likes", "like", `like.userId = ${req.userId}`);
+  if (user) {
+    await posts.andWhere("posts.userId = :userId", {
+      userId: req.query.userId,
+    });
+  }
+
+  posts = await posts
+    .leftJoinAndSelect("posts.user", "user")
+    .loadRelationCountAndMap("posts.likeCount", "posts.likes")
+    .loadRelationCountAndMap("posts.commentCount", "posts.comments")
+    .getManyAndCount();
+
+  const cleanedPosts = posts[0].map((post) => {
+    const { likes, ...freshPost } = post;
+    return {
+      ...freshPost,
+      isLikedByMe: post.likes.length > 0,
+    };
   });
 
-  return res.json([...posts]);
+  return res.json([cleanedPosts, posts[1]]);
 };
 
 // create animal
