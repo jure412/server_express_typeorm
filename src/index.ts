@@ -8,6 +8,8 @@ import {
 import { LOGIN, LOGOUT, REFRESH_TOKEN } from "./Controllers/AuthController";
 import { CREATE_USER, GET_USER, GET_USERS } from "./Controllers/UserController";
 import { handlePromise } from "./Helpers/HandlePromise";
+import { LIKE } from "./Controllers/LikeController";
+import { CREATE_COMMENT, GET_COMMENTS } from "./Controllers/CommentController";
 const cookies = require("cookie-parser");
 const cors = require("cors");
 const express = require("express");
@@ -62,15 +64,14 @@ const main = async () => {
 
     const Middleware = function (req: any, res: any, next: () => void) {
       const token: any = req.headers.authorization?.split(" ")[1];
-      console.log({ token });
       if (token) {
         verify(token, tokenVariable, (err, decoded) => {
-          if (err) res.status(401).send("UNAUTHORIZED"); //invalid token
+          if (err) res.sendStatus(403);
           req.userId = decoded.userId;
           next();
         });
       } else {
-        res.status(401).send("UNAUTHORIZED");
+        res.sendStatus(403);
       }
     };
 
@@ -82,7 +83,10 @@ const main = async () => {
     app.get("/api/users", Middleware, handlePromise(GET_USERS));
     app.post("/api/post/create", Middleware, handlePromise(CREATE_POST));
     app.post("/api/post/delete", Middleware, handlePromise(DELETE_POST));
-    app.get("/api/posts", Middleware, handlePromise(GET_POSTS));
+    app.get("/api/posts/:userId?", Middleware, handlePromise(GET_POSTS));
+    app.post("/api/like", Middleware, handlePromise(LIKE));
+    app.post("/api/comment/create", Middleware, handlePromise(CREATE_COMMENT));
+    app.get("/api/comments/:postId?", Middleware, handlePromise(GET_COMMENTS));
 
     app.listen(8080, () => {
       console.log("Now running on port 8080");

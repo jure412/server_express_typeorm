@@ -10,13 +10,7 @@ export const GET_USERS = async (
     json: (arg: [any[], number]) => any;
   }
 ) => {
-  // const { userId } = req;
-  // if (!userId) {
-  //   return res.status(402).send("INVALID_ACCESS");
-  // }
-
   const users = await AppDataSource.manager.findAndCount(User);
-
   const shapedRes = users[0].map(({ password, refreshToken, ...user }) => user);
   return res.json([shapedRes, users[1]]);
 };
