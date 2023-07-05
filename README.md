@@ -1,7 +1,9 @@
-# Awesome Project Build with TypeORM
+how to run?
 
-Steps to run this project:
+- npm install
 
-1. Run `npm i` command
-2. Setup database settings inside `data-source.ts` file
-3. Run `npm start` command
+- create mysql database with name express_typeorm_react_redux that runs on port 3306 and use credentials below
+  username: "root",
+  password: "12345678"
+
+- npm start

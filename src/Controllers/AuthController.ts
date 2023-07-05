@@ -1,7 +1,7 @@
-import { sign, verify } from "jsonwebtoken";
-import { User } from "../Entities/User";
-import { AppDataSource, tokenVariable } from "../../src/index";
 import { compareSync } from "bcryptjs";
+import { sign, verify } from "jsonwebtoken";
+import { AppDataSource, tokenVariable } from "../../src/index";
+import { User } from "../Entities/User";
 
 // login user
 // "/api/login"

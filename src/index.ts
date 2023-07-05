@@ -1,15 +1,15 @@
 import { verify } from "jsonwebtoken";
 import { DataSource } from "typeorm";
+import { LOGIN, LOGOUT, REFRESH_TOKEN } from "./Controllers/AuthController";
+import { CREATE_COMMENT, GET_COMMENTS } from "./Controllers/CommentController";
+import { LIKE } from "./Controllers/LikeController";
 import {
   CREATE_POST,
   DELETE_POST,
   GET_POSTS,
 } from "./Controllers/PostController";
-import { LOGIN, LOGOUT, REFRESH_TOKEN } from "./Controllers/AuthController";
 import { CREATE_USER, GET_USER, GET_USERS } from "./Controllers/UserController";
 import { handlePromise } from "./Helpers/HandlePromise";
-import { LIKE } from "./Controllers/LikeController";
-import { CREATE_COMMENT, GET_COMMENTS } from "./Controllers/CommentController";
 const cookies = require("cookie-parser");
 const cors = require("cors");
 const express = require("express");
